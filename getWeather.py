@@ -24,7 +24,7 @@ def umlaute(string):
 def getWeather():
 
     try:
-        response = url.urlopen('http://api.openweathermap.org/data/2.5/YOURDATA')
+        response = url.urlopen('http://api.openweathermap.org/data/2.5/'+ YOURDATA)
 
         data = json.load(response)
     except Exception, e:
