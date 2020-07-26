@@ -365,7 +365,7 @@ def timetable():
     print('Timetable')
     haltestelle = "Köln Hbf"
     try:
-        fplan = fpl.getFahrplan()
+        fplan = ttb.getFahrplan()
     except Exception as e:
         oled.oPrint("\n" + oled.center("FEHLER (Fahrplan)") + "\n" + str(e))
         #print str(e)
