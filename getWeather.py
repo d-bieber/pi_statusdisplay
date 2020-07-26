@@ -16,7 +16,7 @@ CITY2='#######' #City2-ID
 API_KEY='YOURKEY'#OpenWeatherMap API-Key
 
 #Storm API
-LOCATION_ID = '#######'#Location id from dwd.de
+LOCATION_ID = '#######'#Location id from dwd.de for storm warnings
 
 ##############
     
