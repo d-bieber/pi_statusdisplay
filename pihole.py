@@ -2,12 +2,15 @@
 # coding: utf-8
 
 
-import urllib2 as url
+import urllib.request as url
 import json
+
+ip = 'CHANGE ME' #PiHole IP
+
 
 def getStatus():
     try:
-        response = url.urlopen('http://192.168.2.200/admin/api.php?status')
+        response = url.urlopen('http://' + ip + '/admin/api.php?status')
     except:
         return False
     else:
@@ -19,7 +22,7 @@ def getStatus():
 
 def getQueries():
     try:
-        response = url.urlopen('http://192.168.2.200/admin/api.php')
+        response = url.urlopen('http://' + ip + '/admin/api.php')
     except:
         ret = -1
     else:
@@ -29,7 +32,7 @@ def getQueries():
 
 def getBlocked():
     try:
-        response = url.urlopen('http://192.168.2.200/admin/api.php')
+        response = url.urlopen('http://' + ip + '/admin/api.php')
     except:
         ret = -1
     else:
@@ -39,7 +42,7 @@ def getBlocked():
 
 def getPercentage():
     try:
-        response = url.urlopen('http://192.168.2.200/admin/api.php')
+        response = url.urlopen('http://' + ip + '/admin/api.php')
     except:
         ret = -1
     else:
@@ -48,3 +51,8 @@ def getPercentage():
         ret = round(h,2)
     return ret
 
+
+""" print('Status: ' + str(getStatus()))
+print('Queries: ' + getQueries())
+print('Blocked: ' + getBlocked())
+print('Percentage: ' + str(getPercentage())) """

@@ -1,31 +1,22 @@
 #!/usr/env python
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
-import urllib2 as url
+from __future__ import unicode_literals
+
+import urllib.request as url
 import json
 
-import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
 
-
-
-
-def umlaute(string):
-    string = string.replace('ä', 'ae')
-    string = string.replace('ö', 'oe')
-    string = string.replace('ü', 'ue')
-    string = string.replace('Ä', 'Ae')
-    string = string.replace('Ö', 'Oe')
-    string = string.replace('Ü', 'Ue')
-    string = string.replace('ß', 'ss')
-    string = string.replace('Ã¼', 'ue')
-    string = string.replace('é', 'e')
-    string = string.replace('è', 'e')
-    string = string.replace('ê', 'e')
-    return string
 
 def getFahrplan():
+    ####CONFIG####
+
+    STATION='Koeln Hbf'
+
+    ##############
+
+    STATION = STATION.replace(' ', '%20')
+
     class Plan():
         def __init__(self, train,platform,dest,timeDepart,delay,messages,viaText):
             self.train = train
@@ -43,8 +34,7 @@ def getFahrplan():
     plan2 = None
 
     try:
-        response = url.urlopen('https://dbf.finalrewind.org/Köln%20Hbf?mode=marudor&version=3')
-
+        response = url.urlopen('https://dbf.finalrewind.org/' + STATION + '?mode=marudor&version=3')
         data = json.load(response)
 
     except Exception as e:
@@ -84,7 +74,6 @@ def getFahrplan():
 
             if not dest:
                 dest = ""
-            dest = dest.encode('utf-8')
 
             if not train:
                 train = ""
@@ -97,7 +86,7 @@ def getFahrplan():
             if via:
                 viaText = "via: "
                 for i in range(0, len(via)):
-                    viaText += via[i].encode('utf-8')
+                    viaText += via[i]
                     if not (i==(len(via)-1)):
                         viaText += " - "
 
@@ -108,17 +97,17 @@ def getFahrplan():
             messages = "++ "
 
             if cancelled:
-                messages = "++ Fahrt faellt aus: "
+                messages = "++ Fahrt fällt aus: "
 
             delayMessages = fData['messages']['delay']
             if delayMessages:
                 for i in range(0,len(delayMessages)):
-                    messages += delayMessages[i]['text'].encode('utf-8') + " ++ "
+                    messages += delayMessages[i]['text'] + " ++ "
 
             qosMessages = fData['messages']['qos']
             if qosMessages:
                 for i in range(0,len(qosMessages)):
-                    messages += qosMessages[i]['text'].encode('utf-8') + " ++ "
+                    messages += qosMessages[i]['text'] + " ++ "
 
             if (messages == "++ "):
                 messages = ""
@@ -126,21 +115,21 @@ def getFahrplan():
                 messages = messages[:len(messages)-1]
 
             if(x==0):
-                plan0 = Plan(train,platform,umlaute(dest),timeDepart,delay,umlaute(messages),umlaute(viaText))
+                plan0 = Plan(train,platform,dest,timeDepart,delay,messages,viaText)
             if(x==1):
-                plan1 = Plan(train,platform,umlaute(dest),timeDepart,delay,umlaute(messages),umlaute(viaText))
+                plan1 = Plan(train,platform,dest,timeDepart,delay,messages,viaText)
             if(x==2):
-                plan2 = Plan(train,platform,umlaute(dest),timeDepart,delay,umlaute(messages),umlaute(viaText))
+                plan2 = Plan(train,platform,dest,timeDepart,delay,messages,viaText)
 
-            # print train
-            # print platform
-            # print dest
-            # print timeDepart
-            # print delay
-            # print messages
-            # print viaText
-            # print cancelled
-            # print '-----------------------'
+            # print(train)
+            # print(platform)
+            # print(dest)
+            # print(timeDepart)
+            # print(delay)
+            # print(messages)
+            # print(viaText)
+            # print(cancelled)
+            # print('-----------------------')
 
 
 
@@ -154,4 +143,4 @@ def getFahrplan():
         return plan0, plan1, plan2 
     
 
-
+#getFahrplan()
