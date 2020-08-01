@@ -5,9 +5,12 @@
 import signal
 import sys
 
-import oled_control as oled #modified display driver
+import configparser
+
+import oled_control as oled #Modifizierter Display-Treiber
 import time
 import datetime
+import random
 
 from luma.core.render import canvas
 from luma.core.sprite_system import framerate_regulator
@@ -17,22 +20,31 @@ import os #system temperature and voltage
 import urllib.request as url #Urlopen
 import pihole #PiHole Status
 
-INTERVALL = 10 #time in seconds between two screens
-VERSION = '6.0'
+DEBUG = False
+
+if not(DEBUG):
+    INTERVALL = 10 #time in seconds between two screens
+else:
+    INTERVALL = 3 #shorter time in debug mode to check screens
+VERSION = '6.1'
 
 degreeSymbol = '°C'
+cfg = configparser.ConfigParser()
 
-#TODO
-# def sleep(sleepTime):
-#     t = sleepTime*10
-#     for i in range(0,time):
-#         try:
-#             time.sleep(0.1)
-#         except:
-#             pass
 
 def umlaute(string):
     return oled.umlaute(string)
+
+
+def readConfig():
+    try:
+        cfg.read('config.ini')
+    except Exception as e:
+        return
+    else:
+        if not cfg.sections():
+            return False
+        return True
 
 def start():
     device = oled.getDevice()
@@ -40,6 +52,11 @@ def start():
     font = oled.getFont()
     brands_font = oled.make_font("fa-brands.ttf", device.height - 30)
     icon = '\uf7bb'#raspberry-pi
+
+    if not readConfig():
+        oled.scPrint(oled.center('ERROR'),'','Couldn\'t read config','','',oled.center('Script stopped!'))
+        time.sleep(5)
+        exit()
 
     for i in range(33,138):#print fancy chars on startup
         oled.puts(chr(i))
@@ -73,7 +90,8 @@ def getIcon(icon):#get weather icons
 
 #Clock by luma.oled examples
 def clock():
-    print('Clock')
+    if(DEBUG):
+        print('Clock')
 
     today_last_time = "Unknown"
     device=oled.getDevice()
@@ -119,6 +137,9 @@ def clock():
 
 #Start Weather
 def weather():
+    if(DEBUG):
+        print('Weather')
+
     MAX_LENGTH = oled.getWidth()
     device = oled.getDevice()
 
@@ -127,40 +148,38 @@ def weather():
     weather_font = oled.make_font("fa-solid.ttf", device.height - 40)
     font = oled.getFont()
 
-    print('Weather')
     try:
         w_in = open("weather.wtd","r")
         
-        #Wetter CITY1
-        name1 = oled.center("CITY1")#CHANGE ME
+        #Weather City1
+        name1 = oled.center(w_in.readline().rstrip())
         temp1 = w_in.readline().rstrip()
         condition1 = oled.center(umlaute(w_in.readline().rstrip()))
         icon1 = w_in.readline().rstrip()
-        #Wetter CITY2
-        name2 = oled.center("CITY2")#CHANGE ME
+        #Weather City2
+        name2 = oled.center(w_in.readline().rstrip())
         temp2 = w_in.readline().rstrip()
         condition2 = oled.center(umlaute(w_in.readline().rstrip()))
         icon2 = w_in.readline().rstrip()
         w_in.close()
 
     except Exception as e:
-        print(e)
-        oled.scPrint("",oled.center("Wetter"),oled.center("Fehler"),"", oled.center(str(e)))
+        oled.scPrint('Error [Weather]','',str(e))
         time.sleep(INTERVALL)
     else:
         code1 = getIcon(icon1)
         code2 = getIcon(icon2)
 
         if not condition1:
-            condition1 = oled.center("Fehler!")
+            condition1 = oled.center("Error!")
             code1 = '\uf00d'
             
         if not condition2:
-            condition2 = oled.center("Fehler!")
+            condition2 = oled.center("Error!")
             code2 = '\uf00d'
 
 
-        #WETTER1 - CITY1
+        #WETTER1
         diff = (len(condition1)-MAX_LENGTH)*6
 
         if diff<=0:
@@ -187,7 +206,7 @@ def weather():
         time.sleep(INTERVALL/2)
 
 
-        #WETTER2 - CITY2
+        #WETTER2
         diff = (len(condition2)-MAX_LENGTH)*6
 
         if diff<=0:
@@ -214,38 +233,10 @@ def weather():
         time.sleep(INTERVALL/2)
 
 
-def __old_weather():
-    print('Weather')
-    try:
-        w_in = open("weather.wtd","r")
-        
-        #Wetter CITY1
-        name1 = oled.center("CITY1")
-        temp1 = w_in.readline().rstrip()
-        condition1 = oled.center(umlaute(w_in.readline().rstrip()))
-        #Wetter CITY2
-        name2 = oled.center("CITY2")
-        temp2 = w_in.readline().rstrip()
-        condition2 = oled.center(umlaute(w_in.readline().rstrip()))
-        w_in.close()
-        if not condition1:
-            condition1 = oled.center("Fehler!")
-        if not condition2:
-            condition2 = oled.center("Fehler!")
-
-        oled.scPrint(oled.center("Wetter"), "", name1, condition1, oled.center(temp1 + degreeSymbol))
-        time.sleep(INTERVALL/2)
-        oled.scPrint(oled.center("Wetter"), "", name2, condition2, oled.center(temp2 + degreeSymbol))
-        time.sleep(INTERVALL/2)
-    except Exception as e:
-        print(e)
-        oled.scPrint("",oled.center("Wetter"),"",oled.center("Fehler"))
-        time.sleep(INTERVALL)
-
-
 #Start Storm
 def storm():
-    print('Storm')
+    if(DEBUG):
+        print('Storm')
     try:
         u_in = open("storm.wtd","r")
     except Exception as e:
@@ -310,16 +301,26 @@ def storm():
 
 #Start PiHole status
 def piholeStatus():
-    print('piHole Status')
+    if(DEBUG):
+        print('piHole Status')
+        
     device = oled.getDevice()
+
+    try:
+        piholeip = cfg['pihole']['ip']
+    except Exception as e:
+        oled.scPrint(oled.center('Error [PiHole]'),'',oled.center('Could not'),oled.center('find config!'))
+        time.sleep(INTERVALL)
+        return 
+
     for i in range(0,INTERVALL):#refresh every second for INTERVALL times
         with canvas(device, dither=None) as draw:
-            queries = pihole.getQueries()
-            blocked = pihole.getBlocked()
-            percentage = pihole.getPercentage()
+            queries = pihole.getQueries(piholeip)
+            blocked = pihole.getBlocked(piholeip)
+            percentage = pihole.getPercentage(piholeip)
 
 
-            if pihole.getStatus():
+            if pihole.getStatus(piholeip):
                 ph_status = "(Active)"
             else:
                 ph_status = "(STOPPED)"
@@ -341,34 +342,22 @@ def piholeStatus():
         time.sleep(1)
 
 
-def __oldPiholeStatus():
-    queries = pihole.getQueries()
-    blocked = pihole.getBlocked()
-    percentage = pihole.getPercentage()
-    if pihole.getStatus():
-        ph_status = "(Running)"
-    else:
-        ph_status = "(Stopped)"
-    if ((queries==-1) or (blocked==-1) or (percentage==-1)):
-        oled.oPrint(oled.center("PiHole " + chr(4)) + "\n\n" +
-            oled.center("Fehler"))
-    else:
-        oled.oPrint(oled.center("PiHole " + ph_status) +"\n" +
-            oled.concat("Queries: ", str(queries)) +"\n"+
-            oled.concat("Blocked: ", str(blocked)) +"\n"+
-            oled.concat("Percentage: ",  str(percentage) + "%"))
-    time.sleep(INTERVALL)
-
-
 #Start timetable
 def timetable():
-    print('Timetable')
-    haltestelle = "Köln Hbf"
+    if(DEBUG):
+        print('Timetable')
+
     try:
-        fplan = ttb.getFahrplan()
+        station = cfg['timetable']['station']
     except Exception as e:
-        oled.oPrint("\n" + oled.center("FEHLER (Fahrplan)") + "\n" + str(e))
-        #print str(e)
+        oled.scPrint(oled.center('Error [Timetable]'),'',oled.center('Could not'),oled.center('find config!'))
+        time.sleep(INTERVALL)
+        return
+
+    try:
+        fplan = ttb.getFahrplan(station)
+    except Exception as e:
+        oled.scPrint(oled.center('Error [Timetable]','',str(e)))
         time.sleep(INTERVALL)
     else:
         if fplan:
@@ -380,7 +369,7 @@ def timetable():
                 if(fplan[i].delay > 0):
                     depart = "(+" + str(fplan[i].delay) + ")" + fplan[i].timeDepart
 
-                oled.scPrint(oled.concat(haltestelle,fplan[i].platform), 
+                oled.scPrint(oled.concat(station,fplan[i].platform), 
                     "---------------------",
                     oled.concat(fplan[i].train, depart),
                     umlaute(fplan[i].via),
@@ -388,17 +377,18 @@ def timetable():
                     umlaute(fplan[i].messages))
                 time.sleep(INTERVALL/2)
         else:
-            oled.scPrint(haltestelle, 
+            oled.scPrint(station, 
                 "---------------------",
                 "",
-                oled.center("Keine Abfahrten"),oled.center("gefunden!"))
+                oled.center("No departures"),oled.center("found!"))
             time.sleep(INTERVALL/2)
 
 
 
 #Start Raspberry Pi Status 
 def pistatus():
-    print('PiStatus')
+    if(DEBUG):
+        print('PiStatus')
 
     temp = os.popen('vcgencmd measure_temp').read()
     tempprint = temp[(temp.rfind("=")+1):]
@@ -421,10 +411,14 @@ def nightMode():
     device = oled.getDevice()
     font = oled.getFont()
     splash = 5
+    x=40
+    y=53
 
     while(1):
         now = datetime.datetime.now()
         now_time = now.strftime("%H:%M:%S")
+
+
         
         f = "%H:%M:%S"
         d_str = '04:00:00'
@@ -436,7 +430,11 @@ def nightMode():
             if(splash>0):
                 draw.text((0,20), text=oled.center('Night Mode'), font=font, fill="white")
                 splash-=1
-            draw.text((40,53), text=now_time, font=font, fill="grey") 
+            draw.text((x,y), text=now_time, font=font, fill="grey")
+            if(now.strftime("%S")=='59') and (splash==0):
+                x=random.randint(0,80)
+                y=random.randint(0,52)
+
         time.sleep(1)
 
 

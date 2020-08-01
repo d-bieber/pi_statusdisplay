@@ -1,6 +1,8 @@
 #!/usr/env python
 # coding: utf-8
 
+from __future__ import unicode_literals
+
 import urllib.request as url
 import time as time
 import json
@@ -8,21 +10,25 @@ import ssl
 
 import datetime
 
-####CONFIG####
+import configparser
 
-#Weather API
-CITY1='#######' #City1-ID
-CITY2='#######' #City2-ID
-API_KEY='YOURKEY'#OpenWeatherMap API-Key
+cfg = configparser.ConfigParser()
 
-#Storm API
-LOCATION_ID = '#######'#Location id from dwd.de for storm warnings
-
-##############
+def readConfig():
+    try:
+        cfg.read('config.ini')
+    except Exception:
+        print(e)
+        return
+    else:
+        if not cfg.sections():
+            return False
+        return True
+        
     
 
-def getWeather():
-    weather_url = 'https://api.openweathermap.org/data/2.5/group?id=' + CITY1 + ',' + CITY2 + '&lang=de&units=metric&appid=' + API_KEY
+def getWeather(city1,city2,apikey):
+    weather_url = 'https://api.openweathermap.org/data/2.5/group?id=' + city1 + ',' + city2 + '&lang=de&units=metric&appid=' + apikey
 
     for t in range(0,3):
         try:
@@ -38,6 +44,7 @@ def getWeather():
             icon2 = "  -"
         else:
             e=""
+            name1=data['list'][0]['name']
             temp1=data['list'][0]['main']['temp']
             icon1=data['list'][0]['weather'][0]['icon']
 
@@ -49,6 +56,7 @@ def getWeather():
                     condition1 += ", "
 
 
+            name2=data['list'][1]['name']
             temp2=data['list'][1]['main']['temp']
             icon2=data['list'][1]['weather'][0]['icon']
 
@@ -65,11 +73,11 @@ def getWeather():
     zeit = time.strftime("%H:%M",lt)
        
     w_out = open("weather.wtd","w")
-    w_out.write(str(temp1) + "\n" + condition1 + "\n" + icon1 + "\n" + str(temp2) + "\n" + condition2 + "\n" + icon2 + "\n--------\n" + zeit + "\n" + "Try: " + str(t) + "\n" + str(e))
+    w_out.write(name1 + "\n" + str(temp1) + "\n" + condition1 + "\n" + icon1 + "\n" + name2 + "\n" + str(temp2) + "\n" + condition2 + "\n" + icon2 + "\n--------\n" + zeit + "\n" + "Try: " + str(t) + "\n" + str(e))
     w_out.close()
 
 
-def getStorms():
+def getStorm(stormid):
     storm_url='https://www.dwd.de/DWD/warnungen/warnapp/json/warnings.json'
 
     w_out = open("storm.wtd","w")
@@ -102,7 +110,7 @@ def getStorms():
             warnString = "\n"
             vWarnString = ""
             try:
-                warnung = data_u['warnings'][LOCATION_ID]
+                warnung = data_u['warnings'][stormid]
             except:
                 pass
             else:
@@ -125,7 +133,7 @@ def getStorms():
                     warnString = warnString
 
             try:
-                vorwarnung = data_u['vorabInformation'][LOCATION_ID]
+                vorwarnung = data_u['vorabInformation'][stormid]
             except:
                 pass
             else:
@@ -139,9 +147,23 @@ def getStorms():
 
                     vWarnString += "\n" + v_headline + "\n" + v_description
                     vWarnString = vWarnString
-            #print(warnString)
             w_out.write(str(w_count) + warnString + str(v_count) + "\n" + vWarnString)
             w_out.close()
 
-getWeather()
-getStorms()
+if not (readConfig()):
+    print('[getWeather] Could not read config!')
+    exit()
+
+try:
+    weather = cfg['weather']
+    city1 = weather['cityid1']
+    city2 = weather['cityid2']
+    apikey = weather['apikey']
+
+    stormid = weather['stormid']
+except Exception as e:
+    print('[getWeather] Could not read config!')
+    exit()
+else:
+    getWeather(city1,city2,apikey)
+    getStorm(stormid)

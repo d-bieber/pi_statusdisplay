@@ -1,22 +1,12 @@
 #!/usr/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
-
-import urllib.request as url
+import urllib.request
+import urllib.parse
 import json
 
-
-
-def getFahrplan():
-    ####CONFIG####
-
-    STATION='Koeln Hbf'
-
-    ##############
-
-    STATION = STATION.replace(' ', '%20')
-
+def getFahrplan(station):
+    url = urllib.parse.quote('https://dbf.finalrewind.org/' + station + '?mode=marudor&version=3',safe=':?=&/')   
     class Plan():
         def __init__(self, train,platform,dest,timeDepart,delay,messages,viaText):
             self.train = train
@@ -34,7 +24,7 @@ def getFahrplan():
     plan2 = None
 
     try:
-        response = url.urlopen('https://dbf.finalrewind.org/' + STATION + '?mode=marudor&version=3')
+        response = urllib.request.urlopen(url)
         data = json.load(response)
 
     except Exception as e:
@@ -143,4 +133,4 @@ def getFahrplan():
         return plan0, plan1, plan2 
     
 
-#getFahrplan()
+#getFahrplan('Köln Hbf')

@@ -5,10 +5,7 @@
 import urllib.request as url
 import json
 
-ip = 'CHANGE ME' #PiHole IP
-
-
-def getStatus():
+def getStatus(ip):
     try:
         response = url.urlopen('http://' + ip + '/admin/api.php?status')
     except:
@@ -20,7 +17,7 @@ def getStatus():
         else:
             return False
 
-def getQueries():
+def getQueries(ip):
     try:
         response = url.urlopen('http://' + ip + '/admin/api.php')
     except:
@@ -30,7 +27,7 @@ def getQueries():
         ret = '{0:,}'.format(data['dns_queries_today'])
     return ret
 
-def getBlocked():
+def getBlocked(ip):
     try:
         response = url.urlopen('http://' + ip + '/admin/api.php')
     except:
@@ -40,7 +37,7 @@ def getBlocked():
         ret = '{0:,}'.format(data['ads_blocked_today'])
     return ret
 
-def getPercentage():
+def getPercentage(ip):
     try:
         response = url.urlopen('http://' + ip + '/admin/api.php')
     except:
@@ -50,9 +47,3 @@ def getPercentage():
         h = data['ads_percentage_today']
         ret = round(h,2)
     return ret
-
-
-""" print('Status: ' + str(getStatus()))
-print('Queries: ' + getQueries())
-print('Blocked: ' + getBlocked())
-print('Percentage: ' + str(getPercentage())) """
