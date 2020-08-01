@@ -27,6 +27,8 @@ This script is built for my SSD1325 OLED. Thanks to luma.oled it *may* work out-
    
 ## Configuring
 
+**OUTDATED** - Changes only in *config.ini* necessary.
+
 There are several things that can (and have to) be customized.
 
 ### Weather
