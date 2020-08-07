@@ -136,6 +136,38 @@ def center(string):
     string = leer + string
     return string
 
+def half(left,right):
+    width=oled.getWidth()
+    max_size = math.floor(width/2)
+
+
+    l_left = len(left)
+    l_right = len(right)
+
+    d_left=max_size-l_left
+    d_right = max_size-l_right
+
+    string = ""
+
+    for i in range(0,math.ceil((d_left/2))):
+        string += " "
+
+    string+=left
+
+    for i in range(0,max_size-len(string)):
+        string += " "
+
+
+    string+=" " #Add one blank for center
+
+    for i in range(0,math.ceil((d_right/2))):
+        string += " "
+
+    string+=right
+
+
+    return string
+
 def concat(string1, string2):
     """
     Concatenates two strings. First left-Aligned, second right-aligned
