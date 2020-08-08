@@ -69,11 +69,13 @@ def getWeather(city1,city2,apikey):
 
             break
 
+    forecast = getForecast(city2)
+
     lt = time.localtime()
     zeit = time.strftime("%H:%M",lt)
        
     w_out = open("weather.wtd","w")
-    w_out.write(name1 + "\n" + str(temp1) + "\n" + condition1 + "\n" + icon1 + "\n" + name2 + "\n" + str(temp2) + "\n" + condition2 + "\n" + icon2 + "\n--------\n" + zeit + "\n" + "Try: " + str(t) + "\n" + str(e))
+    w_out.write(name1 + "\n" + str(temp1) + "\n" + condition1 + "\n" + icon1 + "\n" + name2 + "\n" + str(temp2) + "\n" + condition2 + "\n" + icon2 + "\n" + forecast + "\n--------\n" + zeit + "\n" + "Try: " + str(t) + "\n" + str(e))
     w_out.close()
 
 
@@ -149,6 +151,35 @@ def getStorm(stormid):
                     vWarnString = vWarnString
             w_out.write(str(w_count) + warnString + str(v_count) + "\n" + vWarnString)
             w_out.close()
+
+def getForecast(city2):
+    forecast_url = 'http://api.openweathermap.org/data/2.5/forecast/daily?id=' + city2 + '&cnt=3&units=metric&appid=' + apikey
+
+    try:
+        response = url.urlopen(forecast_url)
+
+        data = json.load(response)
+    except Exception as e:
+        #EXCEPTION
+        print(str(e))
+    else:
+        name = data['city']['name']
+
+        temp1_min = str(round(data['list'][1]['temp']['min']))
+        temp1_max = str(round(data['list'][1]['temp']['max']))
+        temp2_min = str(round(data['list'][2]['temp']['min']))
+        temp2_max = str(round(data['list'][2]['temp']['max']))
+
+        icon1=data['list'][1]['weather'][0]['icon']
+        icon2=data['list'][2]['weather'][0]['icon']
+
+        string = name + '\n' + icon1 + '\n' + temp1_min + '\n' + temp1_max + '\n' +  icon2 + '\n' + temp2_min + '\n' + temp2_max
+
+        return str(string)
+
+
+
+
 
 if not (readConfig()):
     print('[getWeather] Could not read config!')
