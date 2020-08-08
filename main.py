@@ -11,6 +11,7 @@ import oled_control as oled #Modifizierter Display-Treiber
 import time
 import datetime
 import random
+import calendar
 
 from luma.core.render import canvas
 from luma.core.sprite_system import framerate_regulator
@@ -46,6 +47,12 @@ def readConfig():
             return False
         return True
 
+def findDay(date,short):
+    day = datetime.datetime.strptime(date, '%Y-%m-%d').weekday()
+    if (short):
+        return (calendar.day_name[day])[:3]
+    return (calendar.day_name[day]) 
+
 def start():
     device = oled.getDevice()
 
@@ -58,21 +65,22 @@ def start():
         time.sleep(5)
         exit()
 
-    for i in range(33,138):#print fancy chars on startup
-        oled.puts(chr(i))
-        oled.flush()
-        time.sleep(0.025)
-    time.sleep(2)
+    if not DEBUG:
+        for i in range(33,138):#print fancy chars on startup
+            oled.puts(chr(i))
+            oled.flush()
+            time.sleep(0.025)
+        time.sleep(2)
 
 
-    with canvas(device) as draw:
-        w, h = draw.textsize(text=icon, font=brands_font)
-        left = (device.width - w) / 2
-        draw.text((left, 25), text=icon, font=brands_font)
-        draw.text((0,0), text=oled.center('StatusPi'), font=font)
-        draw.text((0,10), text=oled.center('Version ' + VERSION), font=font)
+        with canvas(device) as draw:
+            w, h = draw.textsize(text=icon, font=brands_font)
+            left = (device.width - w) / 2
+            draw.text((left, 25), text=icon, font=brands_font)
+            draw.text((0,0), text=oled.center('StatusPi'), font=font)
+            draw.text((0,10), text=oled.center('Version ' + VERSION), font=font)
 
-    time.sleep(5)
+        time.sleep(5)
 
 def getIcon(icon):#get weather icons
     iconList = {
@@ -161,6 +169,14 @@ def weather():
         temp2 = w_in.readline().rstrip()
         condition2 = oled.center(umlaute(w_in.readline().rstrip()))
         icon2 = w_in.readline().rstrip()
+        #Forecast
+        f_name = oled.center(w_in.readline().rstrip())
+        f_icon1 = w_in.readline().rstrip()
+        f_temp1_min = w_in.readline().rstrip()
+        f_temp1_max = w_in.readline().rstrip()
+        f_icon2 = w_in.readline().rstrip()
+        f_temp2_min = w_in.readline().rstrip()
+        f_temp2_max = w_in.readline().rstrip()
         w_in.close()
 
     except Exception as e:
@@ -231,6 +247,46 @@ def weather():
                     diff-=1
 
         time.sleep(INTERVALL/2)
+
+        #Forecast
+        if DEBUG:
+            print('Forecast')
+
+
+        with canvas(device) as draw:
+            weather_font = oled.make_font("fa-solid.ttf", device.height - 45)
+
+            width = device.width
+            height = device.height
+
+            icon1 = getIcon(f_icon1)
+            icon2 = getIcon(f_icon2)
+
+            today = datetime.date.today()
+            tomorrow = today + datetime.timedelta(days=1)
+            d_a_tomorrow = tomorrow + datetime.timedelta(days=1)
+
+            draw.line((63,20,63,64),fill="white")
+
+            draw.text((0,0),font= font, text = f_name)
+
+
+            w1, h1 = draw.textsize(text=icon1, font=weather_font)
+            left = (width/4) - (w1/2)
+            top = ((height -h1) / 2) - 2
+
+
+            w2, h2 = draw.textsize(text=icon2, font=weather_font)
+            right = ((width/4)*3) - (w2/2)
+
+
+
+            draw.text((left,top), text=icon1, font=weather_font)
+            draw.text((right,top), text=icon2, font=weather_font)
+
+            draw.text((0,height-20), font=font, text=oled.half(f_temp1_max + '/' + f_temp1_min +'°C', f_temp2_max + '/' + f_temp2_min +'°C'))
+            draw.text((0,height-10), font=font, text=oled.half(findDay(str(tomorrow),True),findDay(str(d_a_tomorrow),True)), fill="orange")
+        time.sleep(INTERVALL)
 
 
 #Start Storm
