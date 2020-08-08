@@ -137,7 +137,7 @@ def center(string):
     return string
 
 def half(left,right):
-    width=oled.getWidth()
+    width=getWidth()
     max_size = math.floor(width/2)
 
 
